@@ -74,7 +74,7 @@ contract TokenZendR is Ownable, Pausable {
      * @param to_ beneficiary address
      * @param amount_ numbers of token to transfer
      */
-    function transferToken(bytes32 symbol_, address to_, uint256 amount_) public whenNotPaused {
+    function transferTokens(bytes32 symbol_, address to_, uint256 amount_) public whenNotPaused {
         require(tokens[symbol_] != address(0), 'The token specified not found in list.');
         require(amount_ > 0, 'The amount must large then zero.');
 
