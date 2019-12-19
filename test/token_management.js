@@ -1,43 +1,36 @@
-const TokenZendR = artifacts.require('TokenZendR.sol');
-const BearToken = artifacts.require('BearToken.sol');
-const CubToken = artifacts.require('CubToken.sol');
-
-const BigNumber = web3.utils.BN;
+const TokenZendR = artifacts.require('TokenZendR');
 
 const should = require('chai')
     .use(require('chai-as-promised'))
-    .use(require('chai-bignumber')(BigNumber))
-    .should()
+    .should();
 
-let sender, bear, cub;
-let BearName = web3.utils.asciiToHex('BEAR');
-let CubName = web3.utils.asciiToHex('CUB');
+let sender;
+let token_name_bytes32 = web3.utils.asciiToHex('OPEN');
+let token_bear_address = '0xee4fD5003990A51B847f2D398a1D251B6DC1cb53';
+let token_cub_address = '0xfD5282C19906C2bDc83CAE70EFEf7725be2454b5';
+let zero_address = '0x0000000000000000000000000000000000000000';
 
 contract('token_management', async (accounts) => {
-    let accountA, accountB, accountC, accountD;
-    [accountA, accountB, accountC, accountD] = accounts;
     beforeEach(async () => {
         sender = await TokenZendR.new();
-        bear = await BearToken.new();
-        cub = await CubToken.new();
-
-        await sender.addNewToken(BearName, bear.address);
-        await sender.addNewToken(CubName, cub.address);
+        await sender.addNewToken(token_name_bytes32, token_bear_address);
     });
 
-    it('should be able to transfer sender token to another wallet.', async () => {
-        // When transfering token, multiple by figure of decimal to get exact token
-        // e.g to send 5 Bear = 5e5, where 5 is the decimal places.
-        let amount = new BigNumber(500000e5);
+    it('should add new supported token', async () => {
+        let address = await sender.tokens.call(token_name_bytes32);
+        address.should.equal(token_bear_address);
+    });
 
-        // Account a approve contract to spend on behalf
-        await bear.approve(sender.address, amount, { from: accountA });
+    it('should update supported token address', async () => {
+        await sender.addNewToken(token_name_bytes32, token_cub_address);
+        let address = await sender.tokens.call(token_name_bytes32);
+        address.should.equal(token_cub_address);
+    });
 
-        await sender.transferTokens(BearName, accountB, amount, {from: accountA});
-
-        let balance = ((await bear.balanceOf(accountB)).toString());
-
-        balance.should.equal(amount.toString());
+    it('should remove unused supported token address', async () => {
+        await sender.removeToken(token_name_bytes32);
+        let address = await sender.tokens.call(token_name_bytes32);
+        address.should.equal(zero_address);
     });
 });
 
