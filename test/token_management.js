@@ -1,35 +1,33 @@
 const TokenZendR = artifacts.require('TokenZendR');
-const BearToken = artifacts.require('BearToken');
-const CubToken = artifacts.require('CubToken');
 
-let sender, bear, cub;
-let BearName = web3.utils.asciiToHex('BEAR');
-let CubName = web3.utils.asciiToHex('CUB');
+let sender;
+let token_name_bytes32 = web3.utils.asciiToHex('BEAR');
+let token_address_1 = '0x5a19000aCeAD1B22795675d506BB3715f5bcD9F3';
+let token_address_2 = '0xBf773B4d4c056f5524B2A6d06e29F0A45874320A';
+// token address 1 and 2 are both valid address,
+// but not really point to any token contract.
+let zero_address = '0x0000000000000000000000000000000000000000';
 
 contract('token_management', _accounts => {
-    let accountA, accountB, accountC, accountD;
-    [accountA, accountB, accountC, accountD] = _accounts;
     beforeEach(async () => {
         sender = await TokenZendR.deployed();
-        bear = await BearToken.deployed();
-        cub = await CubToken.deployed();
-
-        await sender.addNewToken(BearName, bear.address);
-        await sender.addNewToken(CubName, cub.address);
+        await sender.addNewToken(token_name_bytes32, token_address_1);
     });
 
-    it('should be able to transfer sender token to another wallet.', async () => {
-        // When transfering token, multiple by figure of decimal to get exact token
-        // e.g to send 5 Bear = 5e5, where 5 is the decimal places.
-        let amount = web3.utils.toBN(500000e5);
+    it('should add new supported token', async () => {
+        let address = await sender.tokens.call(token_name_bytes32);
+        assert.equal(address, token_address_1, 'now address should equal to address_1.');
+    });
 
-        // Account a approve contract to spend on behalf
-        await bear.approve(sender.address, amount, { from: accountA });
+    it('should update supported token', async () => {
+        await sender.addNewToken(token_name_bytes32, token_address_2);
+        let address = await sender.tokens.call(token_name_bytes32);
+        assert.equal(address, token_address_2, 'now address should equal to address_2.');
+    });
 
-        await sender.transferTokens(BearName, accountB, amount, {from: accountA});
-
-        let balance = ((await bear.balanceOf(accountB)).toString());
-
-        assert.equal(balance, amount.toString(), 'Balance of accountB should equal to 500000e5.');
+    it('should remove unused supported token address', async () => {
+        await sender.removeToken(token_name_bytes32);
+        let address = await sender.tokens.call(token_name_bytes32);
+        assert.equal(address, zero_address, 'now address should equl zero address.');
     });
 });
