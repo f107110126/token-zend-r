@@ -1,25 +1,18 @@
-const TokenZendR = artifacts.require('TokenZendR.sol');
-const BearToken = artifacts.require('BearToken.sol');
-const CubToken = artifacts.require('CubToken.sol');
-
-const BigNumber = web3.utils.BN;
-
-const should = require('chai')
-    .use(require('chai-as-promised'))
-    .use(require('chai-bignumber')(BigNumber))
-    .should()
+const TokenZendR = artifacts.require('TokenZendR');
+const BearToken = artifacts.require('BearToken');
+const CubToken = artifacts.require('CubToken');
 
 let sender, bear, cub;
 let BearName = web3.utils.asciiToHex('BEAR');
 let CubName = web3.utils.asciiToHex('CUB');
 
-contract('token_management', async (accounts) => {
+contract('token_management', _accounts => {
     let accountA, accountB, accountC, accountD;
-    [accountA, accountB, accountC, accountD] = accounts;
+    [accountA, accountB, accountC, accountD] = _accounts;
     beforeEach(async () => {
-        sender = await TokenZendR.new();
-        bear = await BearToken.new();
-        cub = await CubToken.new();
+        sender = await TokenZendR.deployed();
+        bear = await BearToken.deployed();
+        cub = await CubToken.deployed();
 
         await sender.addNewToken(BearName, bear.address);
         await sender.addNewToken(CubName, cub.address);
@@ -28,7 +21,7 @@ contract('token_management', async (accounts) => {
     it('should be able to transfer sender token to another wallet.', async () => {
         // When transfering token, multiple by figure of decimal to get exact token
         // e.g to send 5 Bear = 5e5, where 5 is the decimal places.
-        let amount = new BigNumber(500000e5);
+        let amount = web3.utils.toBN(500000e5);
 
         // Account a approve contract to spend on behalf
         await bear.approve(sender.address, amount, { from: accountA });
@@ -37,16 +30,6 @@ contract('token_management', async (accounts) => {
 
         let balance = ((await bear.balanceOf(accountB)).toString());
 
-        balance.should.equal(amount.toString());
+        assert.equal(balance, amount.toString(), 'Balance of accountB should equal to 500000e5.');
     });
 });
-
-// var token_management = artifacts.require("token_management");
-
-// contract("token_management", function(_accounts) {
-//   it("should assert true", function(done) {
-//     token_management.deployed();
-//     assert.isTrue(true);
-//     done();
-//   });
-// });
